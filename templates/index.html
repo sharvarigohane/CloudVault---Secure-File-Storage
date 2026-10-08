@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudVault</title>
+<style>
+  :root {
+    --bg: #1B1D22;
+    --surface: #24272E;
+    --surface-raised: #2B2F37;
+    --border: #383C44;
+    --border-strong: #4A4F59;
+    --text: #EDEBE3;
+    --text-secondary: #9B9C9A;
+    --text-muted: #6D6F72;
+    --accent: #C9A227;
+    --accent-hover: #DDB53A;
+    --accent-text: #1B1D22;
+    --danger: #C0524A;
+    --danger-hover: #D2635A;
+    --success: #6FA37B;
+    --radius: 6px;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+    --sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    line-height: 1.5;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand h1 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .brand .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+    margin-top: 1px;
+  }
+
+  .session {
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .session button {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+
+  .lock-icon { flex-shrink: 0; }
+
+  section.panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .panel-title {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0 0 14px 0;
+    font-weight: 600;
+  }
+
+  input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 11px;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  input::placeholder { color: var(--text-muted); }
+
+  button {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-strong);
+    background: var(--surface-raised);
+    color: var(--text);
+    cursor: pointer;
+  }
+  button:hover { background: var(--border); }
+
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-text);
+  }
+  button.primary:hover { background: var(--accent-hover); }
+
+  button.danger {
+    background: transparent;
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+  button.danger:hover { background: var(--danger); color: white; }
+
+  .tabs {
+    display: flex;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    padding: 8px 4px;
+    margin-right: 16px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .tab.active {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+  .tab:hover { background: none; color: var(--text); }
+
+  .form-view { display: none; }
+  .form-view.active { display: block; }
+
+  .field-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: -6px 0 12px;
+  }
+
+  .file-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .file-row:last-child { border-bottom: none; }
+
+  .file-name { font-size: 14px; color: var(--text); }
+
+  .file-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .file-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .file-actions button { padding: 6px 12px; font-size: 12px; }
+
+  .empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 24px 0;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 22px;
+    max-width: 360px;
+    width: 100%;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .modal-icon {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .modal-icon.success { background: rgba(111,163,123,0.15); color: var(--success); }
+  .modal-icon.danger { background: rgba(192,82,74,0.15); color: var(--danger); }
+  .modal-icon.info { background: rgba(201,162,39,0.15); color: var(--accent); }
+
+  .modal h3 { margin: 0; font-size: 16px; }
+  .modal p { margin: 0 0 16px; font-size: 13px; color: var(--text-secondary); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  #toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-strong);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    max-width: 360px;
+    transform: translateX(-50%) translateY(-20px);
+    opacity: 0;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  #toast.error { border-left-color: var(--danger); }
+
+  .error-text {
+    color: var(--danger);
+    font-size: 12px;
+    margin: -6px 0 10px;
+    display: none;
+  }
+  .error-text.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg class="lock-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2">
+      <rect x="4" y="11" width="16" height="10" rx="2"/>
+      <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+    </svg>
+    <div>
+      <h1>CloudVault</h1>
+      <span class="tag">encrypted file storage</span>
+    </div>
+  </div>
+  <div class="session" id="session-info">
+    <span>Not signed in</span>
+  </div>
+</header>
+
+<section class="panel" id="auth-panel">
+  <div class="tabs">
+    <button class="tab active" data-tab="login">Sign in</button>
+    <button class="tab" data-tab="signup">Create account</button>
+    <button class="tab" data-tab="forgot">Forgot password</button>
+  </div>
+
+  <div class="form-view active" id="view-login">
+    <input id="login-username" placeholder="Username" autocomplete="username">
+    <input id="login-password" placeholder="Password" type="password" autocomplete="current-password">
+    <div class="error-text" id="login-error"></div>
+    <button class="primary" onclick="login()">Sign in</button>
+  </div>
+
+  <div class="form-view" id="view-signup">
+    <input id="signup-username" placeholder="Username" autocomplete="username">
+    <input id="signup-password" placeholder="Password (min 6 characters)" type="password" autocomplete="off">
+    <input id="signup-question" placeholder="Security question, e.g. first pet's name" autocomplete="off">
+    <input id="signup-answer" placeholder="Answer" autocomplete="off">
+    <div class="field-hint">Used only to verify you if you forget your password — no email required.</div>
+    <div class="error-text" id="signup-error"></div>
+    <button class="primary" onclick="signup()">Create account</button>
+  </div>
+
+  <div class="form-view" id="view-forgot">
+    <div id="forgot-step-1">
+      <input id="forgot-username" placeholder="Username" autocomplete="username">
+      <button class="primary" onclick="loadSecurityQuestion()">Continue</button>
+    </div>
+    <div id="forgot-step-2" style="display:none; margin-top:14px;">
+      <p style="font-size:13px; color:var(--text-secondary); margin:0 0 10px;" id="forgot-question-display"></p>
+      <input id="forgot-answer" placeholder="Your answer" autocomplete="off">
+      <input id="forgot-new-password" placeholder="New password (min 6 characters)" type="password" autocomplete="off">
+      <div class="error-text" id="forgot-error"></div>
+      <button class="primary" onclick="submitReset()">Reset password</button>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="upload-panel" style="display:none;">
+  <p class="panel-title">Upload a file</p>
+  <input type="file" id="file-input" style="margin-bottom:10px;">
+  <button class="primary" onclick="uploadFile()">Upload</button>
+</section>
+
+<section class="panel" id="files-panel" style="display:none;">
+  <p class="panel-title">Your files</p>
+  <input id="search" placeholder="Search by filename..." oninput="onSearch()">
+  <div id="files-list"></div>
+</section>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" id="modal-icon"></div>
+      <h3 id="modal-title"></h3>
+    </div>
+    <p id="modal-body"></p>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+function showModal({icon, title, body, actions}) {
+  const iconEl = document.getElementById('modal-icon');
+  iconEl.className = 'modal-icon ' + icon;
+  iconEl.textContent = icon === 'success' ? '\u2713' : icon === 'danger' ? '!' : 'i';
+  document.getElementById('modal-title').textContent = title;
+  const bodyEl = document.getElementById('modal-body');
+  bodyEl.textContent = body || '';
+  bodyEl.style.display = body ? 'block' : 'none';
+  const actionsEl = document.getElementById('modal-actions');
+  actionsEl.innerHTML = '';
+  actions.forEach(a => {
+    const btn = document.createElement('button');
+    btn.textContent = a.label;
+    btn.className = a.primary ? 'primary' : (a.danger ? 'danger' : '');
+    btn.onclick = () => { closeModal(); a.onClick && a.onClick(); };
+    actionsEl.appendChild(btn);
+  });
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+let toastTimer;
+function showToast(message, isError = false) {
+  const el = document.getElementById('toast');
+  el.textContent = message;
+  el.className = isError ? 'error show' : 'show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'});
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.form-view').forEach(v => v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-' + tab.dataset.tab).classList.add('active');
+
+    // Every tab switch starts clean: clear errors, and give the forgot-
+    // password flow a fresh start each time it's opened, so a failed
+    // attempt never lingers into the next try.
+    setError('login-error', '');
+    setError('signup-error', '');
+    setError('forgot-error', '');
+    if (tab.dataset.tab === 'forgot') {
+      document.getElementById('forgot-username').value = '';
+      document.getElementById('forgot-answer').value = '';
+      document.getElementById('forgot-new-password').value = '';
+      document.getElementById('forgot-step-2').style.display = 'none';
+    }
+
+    // Also wipe any leftover signup credentials whenever the signup tab
+    // isn't the one being opened, so navigating away (with or without a
+    // successful submit) never leaves a password or security answer
+    // sitting in the DOM for the next tab click to reveal.
+    if (tab.dataset.tab !== 'signup') {
+      document.getElementById('signup-password').value = '';
+      document.getElementById('signup-question').value = '';
+      document.getElementById('signup-answer').value = '';
+    }
+  });
+});
+
+function setError(id, message) {
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.classList.toggle('show', !!message);
+}
+
+async function checkAuth() {
+  const res = await fetch('/api/whoami');
+  const data = await res.json();
+  const sessionInfo = document.getElementById('session-info');
+  if (data.authenticated) {
+    sessionInfo.innerHTML = `<span>Signed in as <strong>${escapeHtml(data.username)}</strong></span><button onclick="logout()">Sign out</button>`;
+    document.getElementById('auth-panel').style.display = 'none';
+    document.getElementById('upload-panel').style.display = 'block';
+    document.getElementById('files-panel').style.display = 'block';
+    fetchFiles();
+  } else {
+    sessionInfo.innerHTML = '<span>Not signed in</span>';
+    document.getElementById('auth-panel').style.display = 'block';
+    document.getElementById('upload-panel').style.display = 'none';
+    document.getElementById('files-panel').style.display = 'none';
+  }
+}
+
+async function signup() {
+  setError('signup-error', '');
+  const username = document.getElementById('signup-username').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const security_question = document.getElementById('signup-question').value.trim();
+  const security_answer = document.getElementById('signup-answer').value.trim();
+
+  const res = await fetch('/api/signup', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username, password, security_question, security_answer})
+  });
+  const data = await res.json();
+  if (!res.ok) { setError('signup-error', data.error); return; }
+
+  // Clear sensitive fields now that signup succeeded — don't let the
+  // password or security answer linger in the DOM after they're used.
+  document.getElementById('signup-password').value = '';
+  document.getElementById('signup-question').value = '';
+  document.getElementById('signup-answer').value = '';
+
+  showModal({
+    icon: 'success',
+    title: 'Account created',
+    actions: [{label: 'Sign in now', primary: true, onClick: () => {
+      document.querySelector('.tab[data-tab="login"]').click();
+      document.getElementById('login-username').value = data.username;
+    }}]
+  });
+}
+
+async function login() {
+  setError('login-error', '');
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const res = await fetch('/api/login', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username, password})
+  });
+  const data = await res.json();
+  if (!res.ok) { setError('login-error', data.error); return; }
+  checkAuth();
+}
+
+async function logout() {
+  await fetch('/api/logout', {method: 'POST'});
+  clearAllForms();
+  checkAuth();
+}
+
+function clearAllForms() {
+  ['login-username', 'login-password', 'signup-username', 'signup-password',
+   'signup-question', 'signup-answer', 'forgot-username', 'forgot-answer',
+   'forgot-new-password', 'search'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  setError('login-error', '');
+  setError('signup-error', '');
+  setError('forgot-error', '');
+  document.getElementById('forgot-step-2').style.display = 'none';
+  document.querySelector('.tab[data-tab="login"]').click();
+}
+
+async function loadSecurityQuestion() {
+  const username = document.getElementById('forgot-username').value.trim();
+  const res = await fetch('/api/security-question?username=' + encodeURIComponent(username));
+  const data = await res.json();
+  if (!res.ok) { showToast(data.error, true); return; }
+  document.getElementById('forgot-question-display').textContent = data.security_question;
+  document.getElementById('forgot-step-2').style.display = 'block';
+}
+
+async function submitReset() {
+  setError('forgot-error', '');
+  const username = document.getElementById('forgot-username').value.trim();
+  const security_answer = document.getElementById('forgot-answer').value.trim();
+  const new_password = document.getElementById('forgot-new-password').value;
+  const res = await fetch('/api/reset-password', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username, security_answer, new_password})
+  });
+  const data = await res.json();
+  if (!res.ok) { setError('forgot-error', data.error); return; }
+  showModal({
+    icon: 'success', title: 'Password updated',
+    body: 'You can sign in with your new password now.',
+    actions: [{label: 'Sign in', primary: true, onClick: () => document.querySelector('.tab[data-tab="login"]').click()}]
+  });
+}
+
+async function uploadFile() {
+  const input = document.getElementById('file-input');
+  if (!input.files.length) { showToast('Choose a file first', true); return; }
+  const formData = new FormData();
+  formData.append('file', input.files[0]);
+  const res = await fetch('/api/files', {method: 'POST', body: formData});
+  if (!res.ok) { showToast('Upload failed', true); return; }
+  input.value = '';
+  showToast('File uploaded');
+  fetchFiles();
+}
+
+async function fetchFiles() {
+  const res = await fetch('/api/files');
+  if (!res.ok) return;
+  renderFiles(await res.json());
+}
+
+async function onSearch() {
+  const q = document.getElementById('search').value.trim();
+  const url = q ? '/api/files/search?q=' + encodeURIComponent(q) : '/api/files';
+  const res = await fetch(url);
+  if (!res.ok) return;
+  renderFiles(await res.json());
+}
+
+function renderFiles(files) {
+  const list = document.getElementById('files-list');
+  if (!files.length) {
+    list.innerHTML = '<div class="empty-state">No files yet — upload one above.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  files.forEach(f => {
+    const row = document.createElement('div');
+    row.className = 'file-row';
+    row.innerHTML = `
+      <div>
+        <div class="file-name">${escapeHtml(f.filename)}</div>
+        <div class="file-meta">${formatBytes(f.size_bytes)} &middot; ${formatDate(f.created_at)}</div>
+      </div>
+      <div class="file-actions">
+        <button onclick="downloadFile(${f.id}, '${escapeAttr(f.filename)}')">Download</button>
+        <button class="danger" onclick="confirmDelete(${f.id})">Delete</button>
+      </div>`;
+    list.appendChild(row);
+  });
+}
+
+async function downloadFile(id, filename) {
+  const res = await fetch('/api/files/' + id);
+  if (!res.ok) { showToast('Download failed', true); return; }
+  const blob = await res.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+function confirmDelete(id) {
+  showModal({
+    icon: 'danger',
+    title: 'Delete this file?',
+    body: 'This can\'t be undone.',
+    actions: [
+      {label: 'Cancel'},
+      {label: 'Delete', danger: true, onClick: () => performDelete(id)}
+    ]
+  });
+}
+
+async function performDelete(id) {
+  await fetch('/api/files/' + id, {method: 'DELETE'});
+  showToast('File deleted');
+  fetchFiles();
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+function escapeAttr(str) {
+  return String(str).replace(/'/g, "\\'");
+}
+
+checkAuth();
+</script>
+</body>
+</html>
